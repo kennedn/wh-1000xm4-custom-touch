@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class InstallService extends Service {
     private static final AtomicBoolean running = new AtomicBoolean();
+    static boolean isRunning() { return running.get(); }
     static android.content.SharedPreferences prefs(Context c) { return c.getSharedPreferences("xm4", MODE_PRIVATE); }
     static void status(Context c, String message) {
         prefs(c).edit().putString("status", message).putLong("statusTime", System.currentTimeMillis()).apply();

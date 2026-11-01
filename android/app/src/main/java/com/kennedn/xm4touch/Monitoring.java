@@ -36,6 +36,7 @@ final class Monitoring {
                 InstallService.prefs(c).getString("classic", "").isEmpty()) { complete.run(); return; }
         BluetoothAdapter adapter = c.getSystemService(BluetoothManager.class).getAdapter();
         if (adapter == null || !adapter.isEnabled()) { HeadsetStatus.disconnected(c); complete.run(); return; }
+        final long observedSession = HeadsetStatus.session(c);
         Handler handler = new Handler(Looper.getMainLooper());
         AtomicBoolean finished = new AtomicBoolean();
         Runnable done = () -> { if (finished.compareAndSet(false, true)) complete.run(); };
@@ -45,7 +46,7 @@ final class Monitoring {
             boolean accepted = adapter.getProfileProxy(c, new BluetoothProfile.ServiceListener() {
                 @Override public void onServiceConnected(int profile, BluetoothProfile proxy) {
                     try {
-                        if (finished.get()) return;
+                        if (finished.get() || HeadsetStatus.session(c) != observedSession) return;
                         String selected = InstallService.prefs(c).getString("classic", "");
                         boolean connected = false;
                         for (BluetoothDevice device : proxy.getConnectedDevices()) {
@@ -54,7 +55,7 @@ final class Monitoring {
                         if (connected) {
                             HeadsetStatus.connected(c);
                             if (install) InstallService.start(c, true);
-                        } else HeadsetStatus.disconnected(c);
+                        } else HeadsetStatus.snapshotDisconnected(c, observedSession);
                     } catch (RuntimeException e) { InstallService.status(c, "Cannot check headset connection: " + e.getMessage()); }
                     finally { adapter.closeProfileProxy(profile, proxy); handler.removeCallbacks(timeout); done.run(); }
                 }

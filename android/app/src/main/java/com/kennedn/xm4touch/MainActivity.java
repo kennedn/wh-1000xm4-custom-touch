@@ -28,6 +28,9 @@ public final class MainActivity extends Activity {
     private Button detect;
     private BluetoothLeScanner scanner;
     private ScanCallback scanCallback;
+    private AlertDialog leDialog;
+    private ArrayAdapter<String> leAdapter;
+    private TextView scanMessage;
     private final LinkedHashMap<String, String> leDevices = new LinkedHashMap<>();
     private boolean resumed, detectOnResume;
     private final Runnable scanTimeout = () -> finishLeScan(true);
@@ -67,7 +70,13 @@ public final class MainActivity extends Activity {
         detect.setOnClickListener(v -> startLeScan());
         Button install = new Button(this); install.setText("Install patch"); layout.addView(install);
         install.setOnClickListener(v -> { if (permissions() && saveAddress()) InstallService.start(this, false); });
-        automatic = new Switch(this); automatic.setText("Install when XM4 connects"); layout.addView(automatic);
+        automatic = new Switch(this); automatic.setText("Install when XM4 connects");
+        int toggleGap = (int)(16 * getResources().getDisplayMetrics().density);
+        automatic.setMinHeight((int)(56 * getResources().getDisplayMetrics().density));
+        LinearLayout.LayoutParams toggleLayout = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        toggleLayout.setMargins(0, toggleGap, 0, toggleGap);
+        layout.addView(automatic, toggleLayout);
         automatic.setChecked(InstallService.prefs(this).getBoolean("automatic", false));
         automatic.setOnCheckedChangeListener((button, enabled) -> {
             String classic = InstallService.prefs(this).getString("classic", "");
@@ -119,6 +128,29 @@ public final class MainActivity extends Activity {
         scanner = adapter.getBluetoothLeScanner();
         if (scanner == null) { report("Bluetooth LE scanner unavailable"); return; }
         leDevices.clear();
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        int padding = (int)(24 * getResources().getDisplayMetrics().density);
+        content.setPadding(padding, 0, padding, 0);
+        scanMessage = new TextView(this);
+        scanMessage.setText("Scanning… Devices will appear here.");
+        content.addView(scanMessage);
+        ListView list = new ListView(this);
+        leAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<>());
+        list.setAdapter(leAdapter);
+        content.addView(list, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+            (int)(260 * getResources().getDisplayMetrics().density)));
+        leDialog = new AlertDialog.Builder(this).setTitle("Select your XM4 LE device")
+            .setView(content).setNegativeButton("Cancel", (dialog, which) -> finishLeScan(false)).create();
+        leDialog.setOnCancelListener(dialog -> finishLeScan(false));
+        list.setOnItemClickListener((parent, view, position, id) -> {
+            String address = new ArrayList<>(leDevices.keySet()).get(position);
+            finishLeScan(false);
+            ble.setText(address);
+            saveAddress();
+            report("LE address saved. Ready to install.");
+        });
+        leDialog.show();
         scanCallback = new ScanCallback() {
             @Override public void onScanResult(int type, ScanResult result) { found(result); }
             @Override public void onBatchScanResults(List<ScanResult> results) { for (ScanResult result : results) found(result); }
@@ -133,7 +165,9 @@ public final class MainActivity extends Activity {
                     if (DeviceMatch.xm4Name(name) || race) {
                         String address = result.getDevice().getAddress();
                         leDevices.put(address, (name == null ? "Sony RACE device" : name) + "\n" + address);
-                        report("Found " + leDevices.size() + " LE candidate(s). Finishing scan…");
+                        leAdapter.clear();
+                        leAdapter.addAll(leDevices.values());
+                        scanMessage.setText("Scanning… Select your headset when it appears.");
                     }
                 });
             }
@@ -159,18 +193,14 @@ public final class MainActivity extends Activity {
         }
         scanCallback = null; scanner = null;
         if (detect != null) { detect.setEnabled(true); detect.setText("Detect LE address"); }
-        if (!choose || !resumed) return;
-        if (leDevices.isEmpty()) {
-            report("No XM4 LE advertisements found. Keep the headset on, retry, or enter the known BLE address manually.");
+        if (!choose || !resumed) {
+            if (leDialog != null) leDialog.dismiss();
+            leDialog = null; leAdapter = null; scanMessage = null;
             return;
         }
-        ArrayList<String> addresses = new ArrayList<>(leDevices.keySet());
-        new AlertDialog.Builder(this).setTitle("Select your XM4 LE device")
-            .setItems(leDevices.values().toArray(new String[0]), (dialog, which) -> {
-                ble.setText(addresses.get(which));
-                saveAddress();
-                report("LE address saved. Ready to install.");
-            }).setNegativeButton("Cancel", null).show();
+        if (scanMessage != null) scanMessage.setText(leDevices.isEmpty()
+            ? "No headset found. Close and retry with the headphones nearby, or enter the address manually."
+            : "Scan complete. Select your headset.");
     }
     private void selectPairedHeadset() {
         if (!permissions()) return;

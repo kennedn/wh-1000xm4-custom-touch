@@ -16,7 +16,7 @@ The build copies `../custom-touch-250-min.bin` into the app. Update the checksum
 
 ## Behaviour
 
-* Scans for LE devices for 15 seconds, matching XM4 names or the Sony RACE service. LE addresses may differ from the audio address.
+* Shows LE devices as they are discovered, matching XM4 names or the Sony RACE service. Select immediately; scanning stops after 15 seconds or when a device is selected. LE addresses may differ from the audio address.
 * Checks firmware and existing patch state before writing. Every write is acknowledged and read back; the callback is attached last.
 * Shows patch results in a notification and follows the phone’s light/dark theme.
 * Restores companion monitoring after reboot and unlock, app updates and Bluetooth being re-enabled. Checks for an existing A2DP connection during recovery.

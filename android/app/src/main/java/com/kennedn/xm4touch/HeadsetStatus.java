@@ -17,8 +17,15 @@ final class HeadsetStatus {
         InstallService.status(c, DISCONNECTED);
         c.getSystemService(android.app.NotificationManager.class).cancel(2);
     }
+    // A2DP absence is only a UI snapshot, not evidence that an active BLE install disconnected.
+    static synchronized void snapshotDisconnected(Context c, long observedSession) {
+        if (session(c) != observedSession || InstallService.isRunning()) return;
+        InstallService.prefs(c).edit().putBoolean("disconnected", true).apply();
+        InstallService.status(c, DISCONNECTED);
+    }
     static synchronized void publish(Context c, long session, String message, boolean notify) {
-        if (session(c) != session || InstallService.prefs(c).getBoolean("disconnected", false)) return;
+        if (session(c) != session) return;
+        if (INSTALLED.equals(message)) InstallService.prefs(c).edit().putBoolean("disconnected", false).apply();
         InstallService.status(c, message);
         if (notify) AppNotifications.result(c, "XM4 Touch", message);
     }

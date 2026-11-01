@@ -1,0 +1,68 @@
+# WH-1000XM4 Touch Toggle
+
+RAM patch that makes a long press of CUSTOM toggle touch controls on the Sony WH-1000XM4. Tested on firmware **2.5.0**. Rebooting clears the patch.
+
+## Prerequisites
+
+* `uv` and Python 3.10+
+* USB Bluetooth controller supported by Bumble
+* CUSTOM assigned to Google Assistant in the Sony app
+
+## Setup
+
+Clone [RACE Toolkit](https://github.com/auracast-research/race-toolkit) into this directory and install dependencies:
+
+```bash
+git clone https://github.com/auracast-research/race-toolkit.git race-toolkit
+uv sync
+```
+
+## Usage
+
+Power-cycle the headphones, then run:
+
+```bash
+uv run python custom_touch_250.py --skip-verify
+```
+
+Long-press and release CUSTOM to disable touch. Repeat to enable it. The script exits after installation.
+
+### Options
+
+| Option | Description |
+| --- | --- |
+| `--skip-verify` | Skip code readback; write ACKs and callback readback are still checked. |
+| `--dynamic` | Select an address from the current heap free list. |
+| `--scratch ADDRESS` | Set the upload address. With `--dynamic`, check it fits a free block. |
+| `--timings` | Print installation timings. |
+| `--controller CONTROLLER` | Bluetooth controller (default: `usb:0`). |
+| `--address ADDRESS` | Headset BLE address (default: `C0:2E:A7:E9:FF:00`). |
+
+> The default upload address (`0x10066830`) is unreserved. Dynamic mode checks the free list but does not reserve memory either.
+
+If installation reports a callback mismatch at `0x10003d38`, power-cycle the headphones and retry.
+
+## Building
+
+The 120-byte payload is included. To rebuild [custom_touch_250_min.S](custom_touch_250_min.S), install GNU Arm tools and run:
+
+```bash
+arm-none-eabi-as -mcpu=cortex-m4 -mthumb -o /tmp/custom-touch-min.o custom_touch_250_min.S
+arm-none-eabi-ld -Ttext=0 -e hook -o /tmp/custom-touch-min.elf /tmp/custom-touch-min.o
+arm-none-eabi-objcopy -O binary -j .text /tmp/custom-touch-min.elf custom-touch-250-min.bin
+```
+
+Update `MINIMAL_SIZE` and `MINIMAL_SHA` in the installer after changing the
+payload. It checks both before uploading.
+
+## Tests
+
+```bash
+uv run python -m unittest discover -s tests
+```
+
+Tests use mocked connections and memory. Capstone is installed by `uv sync` for instruction tests.
+
+## Notes
+
+The installer uploads the payload over RACE and redirects the Google Assistant callback. Only RAM is changed. See [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md) for addresses and reverse-engineering notes.

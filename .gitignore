@@ -1,0 +1,37 @@
+# Historical research, captures and extracted assets stay local.
+/archive/
+
+# Generated binaries/images, except the tiny current payload.
+*.bin
+!/custom-touch-250-min.bin
+*.lzma
+*.elf
+*.o
+*.map
+*.apk
+*.apkm
+*.apks
+*.dex
+*.log
+/custom-touch*-state.json
+/heap-*.json
+/mpu-*.json
+/race-read-bench*.json
+
+# Environments, caches and editor/OS files.
+__pycache__/
+*.py[cod]
+.venv/
+.uv-cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+*.swp
+*.swo
+*~
+.DS_Store
+.idea/
+.vscode/
+
+# Local RACE Toolkit source checkout.
+/race-toolkit/

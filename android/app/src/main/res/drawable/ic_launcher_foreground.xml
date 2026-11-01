@@ -1,0 +1,13 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Headphone outline frames a Bluetooth rune; a single white line style. -->
+    <path android:fillColor="@android:color/transparent" android:strokeColor="#FFFFFF"
+        android:strokeWidth="4" android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M28,61 L28,51 A26,26 0,0 1,80 51 L80,61" />
+    <path android:fillColor="#FFFFFF" android:strokeColor="#FFFFFF"
+        android:strokeWidth="4" android:strokeLineJoin="round"
+        android:pathData="M28,53 L34,53 L34,73 L28,73 Q25,73 25,70 L25,56 Q25,53 28,53Z M80,53 L74,53 L74,73 L80,73 Q83,73 83,70 L83,56 Q83,53 80,53Z" />
+    <path android:fillColor="@android:color/transparent" android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.5" android:strokeLineCap="square" android:strokeLineJoin="miter"
+        android:pathData="M43,45 L64,65 L54,75 L54,35 L64,45 L43,65" />
+</vector>

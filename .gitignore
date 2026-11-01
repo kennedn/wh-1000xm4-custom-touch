@@ -35,3 +35,19 @@ __pycache__/
 
 # Local RACE Toolkit source checkout.
 /race-toolkit/
+
+# Android build output and local configuration.
+/android/**/.gradle/
+/android/**/.kotlin/
+/android/**/build/
+/android/**/.cxx/
+/android/**/.externalNativeBuild/
+/android/local.properties
+/android/captures/
+/android/*.iml
+/android/**/release/
+*.aab
+*.jks
+*.keystore
+
+# Keep the Gradle wrapper and uv.lock for reproducible builds.

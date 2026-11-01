@@ -2,13 +2,47 @@
 
 RAM patch that makes a long press of CUSTOM toggle touch controls on the Sony WH-1000XM4. Tested on firmware **2.5.0**. Rebooting clears the patch.
 
-## Prerequisites
+## Android App
+
+Install the patch from your phone, with optional automatic installation when the XM4 connects. Requires Android 12+.
+
+### Build
+
+With JDK 17+ and Android SDK 36.1 installed, run from this directory:
+
+```bash
+cd android
+./gradlew :app:assembleDebug
+```
+
+Install `android/app/build/outputs/apk/debug/app-debug.apk` on your phone.
+
+### Usage
+
+* Allow Nearby Devices and notification permissions.
+* Assign CUSTOM to Google Assistant in the Sony app.
+* Pair the headset in Android settings, then tap **Select XM4**. The list filters paired addresses by `80:99:E7`.
+* Tap **Detect LE address** and select the headset, or enter its BLE address manually.
+* Tap **Install patch**. Long-press and release CUSTOM to toggle touch controls.
+* Enable **Install when XM4 connects** to patch automatically on reconnect.
+
+The app shows **Checking Headset...**, then **Patch installed**. Disconnecting shows **Headset not connected** and clears the result notification.
+
+> Automatic mode restores monitoring after phone reboot and unlock. Force-stop and battery restrictions can prevent background work; reboot/reconnect handling still needs validation.
+
+See [android/README.md](android/README.md) for development notes.
+
+---
+
+## Python Installer
+
+### Prerequisites
 
 * `uv` and Python 3.10+
 * USB Bluetooth controller supported by Bumble
 * CUSTOM assigned to Google Assistant in the Sony app
 
-## Setup
+### Setup
 
 Clone [RACE Toolkit](https://github.com/auracast-research/race-toolkit) into this directory and install dependencies:
 
@@ -17,7 +51,7 @@ git clone https://github.com/auracast-research/race-toolkit.git race-toolkit
 uv sync
 ```
 
-## Usage
+### Usage
 
 Power-cycle the headphones, then run:
 
@@ -27,7 +61,7 @@ uv run python custom_touch_250.py --skip-verify
 
 Long-press and release CUSTOM to disable touch. Repeat to enable it. The script exits after installation.
 
-### Options
+#### Options
 
 | Option | Description |
 | --- | --- |
@@ -42,7 +76,7 @@ Long-press and release CUSTOM to disable touch. Repeat to enable it. The script 
 
 If installation reports a callback mismatch at `0x10003d38`, power-cycle the headphones and retry.
 
-## Building
+## Building the Payload
 
 The 120-byte payload is included. To rebuild [custom_touch_250_min.S](custom_touch_250_min.S), install GNU Arm tools and run:
 
@@ -52,8 +86,8 @@ arm-none-eabi-ld -Ttext=0 -e hook -o /tmp/custom-touch-min.elf /tmp/custom-touch
 arm-none-eabi-objcopy -O binary -j .text /tmp/custom-touch-min.elf custom-touch-250-min.bin
 ```
 
-Update `MINIMAL_SIZE` and `MINIMAL_SHA` in the installer after changing the
-payload. It checks both before uploading.
+Update `MINIMAL_SIZE` and `MINIMAL_SHA` in the Python installer and `SHA` in
+`android/app/src/main/java/com/kennedn/xm4touch/PatchInstaller.java` after changing the payload.
 
 ## Tests
 

@@ -1,0 +1,25 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'com.kennedn.xm4touch'
+    compileSdk { version = release(36) { minorApiLevel = 1 } }
+    buildToolsVersion "36.1.0"
+    defaultConfig {
+        applicationId 'com.kennedn.xm4touch'
+        minSdk 31
+        targetSdk 35
+        versionCode 7
+        versionName '0.7'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    sourceSets.main.assets.srcDir(layout.buildDirectory.dir('payload'))
+}
+
+tasks.register('copyPayload', Copy) {
+    from '../../custom-touch-250-min.bin'
+    into layout.buildDirectory.dir('payload')
+}
+tasks.named('preBuild').configure { dependsOn 'copyPayload' }
